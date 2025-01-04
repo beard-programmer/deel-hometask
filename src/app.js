@@ -67,4 +67,39 @@ app.get("/contracts", getProfile, async (req, res) => {
   }
 });
 
+app.get("/jobs/unpaid", getProfile, async (req, res) => {
+  const { Contract, Job } = req.app.get("models");
+  const { id: profileId, type } = req.profile;
+  const contractRelation = {
+    client: { ClientId: profileId },
+    contractor: { ContractorId: profileId },
+  }[type];
+  if (!contractRelation) {
+    return res.status(500).end();
+  }
+
+  try {
+    const jobs = await Job.findAll({
+      include: [
+        {
+          attributes: [],
+          model: Contract,
+          required: true,
+          where: {
+            status: "in_progress",
+            ...contractRelation,
+          },
+        },
+      ],
+      where: {
+        paid: false,
+      },
+    });
+
+    res.json(jobs);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = app;
