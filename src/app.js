@@ -139,6 +139,7 @@ app.post("/jobs/:job_id/pay", getProfile, async (req, res) => {
               as: "Client",
               required: true,
               where: { id: contractId },
+              attributes: [],
             },
           ],
         }),
@@ -150,6 +151,7 @@ app.post("/jobs/:job_id/pay", getProfile, async (req, res) => {
               as: "Contractor",
               required: true,
               where: { id: contractId },
+              attributes: [],
             },
           ],
         }),
@@ -190,6 +192,60 @@ app.post("/jobs/:job_id/pay", getProfile, async (req, res) => {
       default:
         return res.status(500).json({ error: error.message });
     }
+  }
+});
+
+//POST /balances/deposit/:userId - Deposits money into the the the balance of a client, a client can't deposit more than 25% his total of jobs to pay. (at the deposit moment)
+// This one is confusing.
+app.post("/balances/deposit/:userId", getProfile, async (req, res) => {
+  const { Profile, Contract, Job } = req.app.get("models");
+  const amount = parseInt(req.query.amount); // for the sake of testing amount is passed via query
+
+  const profile = req.profile;
+  const { id: profileId, type } = profile;
+  if (type !== "client") {
+    return res.status(403).end();
+  }
+  try {
+    // I dont believe we need any locking while making deposit.
+    const unpaidTotal = await Job.sum("price", {
+      where: { paid: null },
+      include: [
+        {
+          model: Contract,
+          required: true,
+          attributes: [],
+          include: [
+            {
+              model: Profile,
+              as: "Client",
+              required: true,
+              where: { id: profileId },
+              attributes: [],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!unpaidTotal) {
+      return res.status(400).end();
+    }
+
+    if (unpaidTotal < amount * 4) {
+      return res
+        .status(400)
+        .json({ amount: amount, unpaidTotal: unpaidTotal })
+        .end();
+    }
+
+    await sequelize.transaction(async (t) => {
+      await profile.increment("balance", { by: amount, t });
+    });
+
+    res.json({ amount: amount, unpaidTotal: unpaidTotal });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
