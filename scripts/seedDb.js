@@ -8,7 +8,8 @@ async function seed() {
   await Profile.sync({ force: true });
   await Contract.sync({ force: true });
   await Job.sync({ force: true });
-  //insert data
+
+  // insert data
   await Promise.all([
     Profile.create({
       id: 1,
@@ -74,6 +75,8 @@ async function seed() {
       balance: 314,
       type: "contractor",
     }),
+
+    // Existing contracts
     Contract.create({
       id: 1,
       terms: "bla bla bla",
@@ -137,32 +140,63 @@ async function seed() {
       ClientId: 4,
       ContractorId: 8,
     }),
+
+    // NEW unpaid contracts (additional in_progress contracts):
+    Contract.create({
+      id: 10,
+      terms: "bla bla bla - new contract",
+      status: "in_progress",
+      ClientId: 3, // John Snow
+      ContractorId: 6, // Linus
+    }),
+    Contract.create({
+      id: 11,
+      terms: "bla bla bla - new contract",
+      status: "in_progress",
+      ClientId: 3, // John Snow
+      ContractorId: 7, // Alan
+    }),
+    Contract.create({
+      id: 12,
+      terms: "bla bla bla - new contract",
+      status: "in_progress",
+      ClientId: 1, // Harry Potter
+      ContractorId: 6, // Linus
+    }),
+
+    // Existing jobs
     Job.create({
+      id: 1,
       description: "work",
       price: 200,
       ContractId: 1,
     }),
     Job.create({
+      id: 2,
       description: "work",
       price: 201,
       ContractId: 2,
     }),
     Job.create({
+      id: 3,
       description: "work",
       price: 202,
       ContractId: 3,
     }),
     Job.create({
+      id: 4,
       description: "work",
       price: 200,
       ContractId: 4,
     }),
     Job.create({
+      id: 5,
       description: "work",
       price: 200,
       ContractId: 7,
     }),
     Job.create({
+      id: 6,
       description: "work",
       price: 2020,
       paid: true,
@@ -170,6 +204,7 @@ async function seed() {
       ContractId: 7,
     }),
     Job.create({
+      id: 7,
       description: "work",
       price: 200,
       paid: true,
@@ -177,6 +212,7 @@ async function seed() {
       ContractId: 2,
     }),
     Job.create({
+      id: 8,
       description: "work",
       price: 200,
       paid: true,
@@ -184,6 +220,7 @@ async function seed() {
       ContractId: 3,
     }),
     Job.create({
+      id: 9,
       description: "work",
       price: 200,
       paid: true,
@@ -191,6 +228,7 @@ async function seed() {
       ContractId: 1,
     }),
     Job.create({
+      id: 10,
       description: "work",
       price: 200,
       paid: true,
@@ -198,6 +236,7 @@ async function seed() {
       ContractId: 5,
     }),
     Job.create({
+      id: 11,
       description: "work",
       price: 21,
       paid: true,
@@ -205,6 +244,7 @@ async function seed() {
       ContractId: 1,
     }),
     Job.create({
+      id: 12,
       description: "work",
       price: 21,
       paid: true,
@@ -212,6 +252,7 @@ async function seed() {
       ContractId: 2,
     }),
     Job.create({
+      id: 13,
       description: "work",
       price: 121,
       paid: true,
@@ -219,11 +260,56 @@ async function seed() {
       ContractId: 3,
     }),
     Job.create({
+      id: 14,
       description: "work",
       price: 121,
       paid: true,
       paymentDate: "2020-08-14T23:11:26.737Z",
       ContractId: 3,
+    }),
+
+    // NEW unpaid jobs for the new contracts
+    Job.create({
+      id: 15,
+      description: "unpaid job #1",
+      price: 120,
+      ContractId: 10,
+    }),
+    Job.create({
+      id: 16,
+      description: "unpaid job #2",
+      price: 320,
+      ContractId: 10,
+    }),
+    Job.create({
+      id: 17,
+      description: "unpaid job #1",
+      price: 220,
+      ContractId: 11,
+    }),
+    Job.create({
+      id: 18,
+      description: "unpaid job #2",
+      price: 420,
+      ContractId: 11,
+    }),
+    Job.create({
+      id: 19,
+      description: "unpaid job #3",
+      price: 100500,
+      ContractId: 11,
+    }),
+    Job.create({
+      id: 20,
+      description: "unpaid job #1",
+      price: 520,
+      ContractId: 12,
+    }),
+    Job.create({
+      id: 21,
+      description: "unpaid job #2",
+      price: 620,
+      ContractId: 12,
     }),
   ]);
 }
