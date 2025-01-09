@@ -296,4 +296,67 @@ app.get("/admin/best-profession", async (req, res) => {
   }
 });
 
+//GET /admin/best-clients?start=<date>&end=<date>&limit=<integer> -
+// returns the clients the paid the most for jobs in the query time period.
+// limit query parameter should be applied, default limit is 2.
+app.get("/admin/best-clients", async (req, res) => {
+  const { Job, Contract, Profile } = req.app.get("models");
+  try {
+    const start = new Date(req.query.start);
+    const end = new Date(req.query.end);
+    let limit = 2;
+    if (req.query.limit) {
+      limit = parseInt(req.query.limit);
+    }
+
+    const results = await Job.findAll({
+      attributes: [
+        [sequelize.col("Contract.Client.id"), "id"],
+        [sequelize.col("Contract.Client.firstName"), "firstName"],
+        [sequelize.col("Contract.Client.lastName"), "lastName"],
+        [fn("SUM", col("price")), "totalPaid"],
+      ],
+      include: [
+        {
+          model: Contract,
+          attributes: [],
+          include: [
+            {
+              model: Profile,
+              as: "Client",
+              attributes: [],
+            },
+          ],
+        },
+      ],
+      where: {
+        paid: true,
+        paymentDate: {
+          [Op.between]: [start, end],
+        },
+      },
+      group: [
+        col("Contract.Client.id"),
+        col("Contract.Client.firstName"),
+        col("Contract.Client.lastName"),
+      ],
+      order: [[fn("SUM", col("price")), "DESC"]],
+      limit: limit,
+      raw: true,
+    });
+
+    res.json(
+      results.map((client) => {
+        return {
+          id: client.id,
+          paid: client.totalPaid,
+          fullName: client.firstName + " " + client.lastName,
+        };
+      }),
+    );
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = app;
