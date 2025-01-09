@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const { sequelize } = require("./model");
-const { Op } = require("sequelize");
+const { Op, fn, col } = require("sequelize");
 const { getProfile } = require("./middleware/getProfile");
 const app = express();
 app.use(bodyParser.json());
@@ -244,6 +244,53 @@ app.post("/balances/deposit/:userId", getProfile, async (req, res) => {
     });
 
     res.json({ amount: amount, unpaidTotal: unpaidTotal });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+//GET /admin/best-profession?start=<date>&end=<date> - Returns the profession that earned
+// the most money (sum of jobs paid) for any contactor that worked in the query time range.
+app.get("/admin/best-profession", async (req, res) => {
+  const { Job, Contract, Profile } = req.app.get("models");
+  try {
+    const start = new Date(req.query.start);
+    const end = new Date(req.query.end);
+
+    const result = await Job.findOne({
+      attributes: [
+        [sequelize.col("Contract.Contractor.profession"), "profession"],
+        [fn("SUM", col("price")), "total_earned"],
+      ],
+      include: [
+        {
+          model: Contract,
+          attributes: [],
+          include: [
+            {
+              model: Profile,
+              as: "Contractor",
+              attributes: [],
+            },
+          ],
+        },
+      ],
+      where: {
+        paid: true,
+        paymentDate: {
+          [Op.between]: [start, end],
+        },
+      },
+      group: [col("Contract.Contractor.profession")],
+      order: [[fn("SUM", col("price")), "DESC"]],
+      raw: true,
+    });
+
+    if (!result) {
+      return res.status(404).end();
+    }
+
+    res.json({ bestProfession: result.profession });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
