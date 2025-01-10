@@ -8,9 +8,7 @@ app.use(bodyParser.json());
 app.set("sequelize", sequelize);
 app.set("models", sequelize.models);
 
-/**
- * @returns contract of profile by id
- */
+// GET /contracts/:id - This API is broken 😵! it should return the contract only if it belongs to the profile calling. better fix that!
 app.get("/contracts/:id", getProfile, async (req, res) => {
   const { Contract } = req.app.get("models");
   const { id } = req.params;
@@ -42,6 +40,7 @@ app.get("/contracts/:id", getProfile, async (req, res) => {
   }
 });
 
+// GET /contracts - Returns a list of contracts belonging to a user (client or contractor), the list should only contain non terminated contracts.
 app.get("/contracts", getProfile, async (req, res) => {
   const { Contract } = req.app.get("models");
   const { id: profileId, type } = req.profile;
@@ -56,8 +55,8 @@ app.get("/contracts", getProfile, async (req, res) => {
   try {
     const contracts = await Contract.findAll({
       where: {
-        ...contractRelation,
         [Op.not]: [{ status: "terminated" }],
+        ...contractRelation,
       },
     });
 
@@ -66,7 +65,7 @@ app.get("/contracts", getProfile, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
+// GET /jobs/unpaid - Get all unpaid jobs for a user (either a client or contractor), for active contracts only.
 app.get("/jobs/unpaid", getProfile, async (req, res) => {
   const { Contract, Job } = req.app.get("models");
   const { id: profileId, type } = req.profile;
@@ -82,7 +81,6 @@ app.get("/jobs/unpaid", getProfile, async (req, res) => {
     const jobs = await Job.findAll({
       where: {
         paid: null,
-        // [Op.not]: [{ paid: true }], This is probably some bug.
       },
       include: [
         {
@@ -116,7 +114,6 @@ app.post("/jobs/:job_id/pay", getProfile, async (req, res) => {
   const sequelize = req.app.get("sequelize");
   try {
     await sequelize.transaction(async (t) => {
-      // Do not check if contract is active - no requirement.
       const job = await Job.findOne({
         t,
         lock: t.LOCK.UPDATE,
@@ -206,6 +203,7 @@ app.post("/balances/deposit/:userId", getProfile, async (req, res) => {
   if (type !== "client") {
     return res.status(403).end();
   }
+  const sequelize = req.app.get("sequelize");
   try {
     // I dont believe we need any locking while making deposit.
     const unpaidTotal = await Job.sum("price", {
@@ -253,6 +251,7 @@ app.post("/balances/deposit/:userId", getProfile, async (req, res) => {
 // the most money (sum of jobs paid) for any contactor that worked in the query time range.
 app.get("/admin/best-profession", async (req, res) => {
   const { Job, Contract, Profile } = req.app.get("models");
+  const sequelize = req.app.get("sequelize");
   try {
     const start = new Date(req.query.start);
     const end = new Date(req.query.end);
@@ -301,6 +300,8 @@ app.get("/admin/best-profession", async (req, res) => {
 // limit query parameter should be applied, default limit is 2.
 app.get("/admin/best-clients", async (req, res) => {
   const { Job, Contract, Profile } = req.app.get("models");
+  const sequelize = req.app.get("sequelize");
+
   try {
     const start = new Date(req.query.start);
     const end = new Date(req.query.end);
