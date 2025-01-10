@@ -1,5 +1,14 @@
 # DEEL BACKEND TASK
 
+## From Viktor
+Thanks for giving me this exercise, I have quite enjoyed doing it.
+Now I did my best to do as much as I can under the estimated time limit of 3 hours.
+Truth be told I have spent more time - something around 7. Majority of the time I have spent on exploring and learning syntax of Sequelize ORM.
+I did not add tests, however I did use Rubymine capabilities to test and debug endpoints while working on them.
+Please see generated-requests.http file if you would like to replicate it.
+There is also no refactorings done whatsoever - just a big app.js file, which I believe makes sense given our constraints.
+Thanks for reading this, hope to talk with you soon!
+
 💫 Welcome! 🎉
 
 This backend exercise involves building a Node.js/Express.js app that will serve a REST API. We imagine you should spend around 3 hours at implement this feature.
